@@ -79,7 +79,8 @@ public class SteamworksWorkshopPublisherTests
 
         result.Success.Should().BeFalse();
         result.OfferFaq.Should().BeTrue();
-        result.Message.Should().Contain("Steam");
+        result.Message.Should().Contain("Init failed");
+        result.Message.Should().Contain("FAQ");
     }
 
     [Fact]
@@ -95,7 +96,32 @@ public class SteamworksWorkshopPublisherTests
         var result = await sut.PublishAsync(Params());
 
         result.Success.Should().BeFalse();
+        result.OfferFaq.Should().BeTrue();
         result.Message.Should().Contain("вход");
+        result.Message.Should().Contain("FAQ");
+    }
+
+    [Fact]
+    public async Task PublishAsync_ТаймаутSubmit_ОповещениеСFaq()
+    {
+        // Submit отменён «изнутри», а внешний token — нет → сообщение про таймаут связи.
+        var sut = new SteamworksWorkshopPublisher(
+            appBaseDirectory: Path.GetTempPath(),
+            init: (_, _) => true,
+            shutdown: () => { },
+            isLoggedOn: () => true,
+            submit: (_, _, ct) =>
+            {
+                using var inner = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                inner.Cancel();
+                return Task.FromCanceled<Steamworks.Ugc.PublishResult>(inner.Token);
+            });
+
+        var result = await sut.PublishAsync(Params(), cancellationToken: CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.OfferFaq.Should().BeTrue();
+        result.Message.Should().Contain("таймаут");
     }
 
     [Fact]

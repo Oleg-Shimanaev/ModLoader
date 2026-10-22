@@ -27,6 +27,7 @@ public interface ISteamClient
 
     /// <summary>
     /// Запускает steamcmd workshop_build_item для создания/обновления Workshop item.
+    /// Возвращает детальный результат (консоль не открылась / сразу упал и т.п.).
     /// </summary>
-    bool LaunchSteamCmdWorkshopBuild(string vdfPath, string username);
+    SteamCmdLaunchAttempt LaunchSteamCmdWorkshopBuild(string vdfPath, string username);
 }

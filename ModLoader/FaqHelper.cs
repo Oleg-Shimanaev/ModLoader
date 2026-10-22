@@ -85,13 +85,9 @@ internal static class FaqHelper
     }
 
     private const string BuiltInSummary =
-        "ModLoader публикует мод через steamcmd (workshop_build_item), без запуска игры.\n\n" +
-        "• Нужны Steam и steamcmd.exe («Указать папку steamcmd…» или «Скачать и установить»).\n" +
-        "• Автоустановка: %LOCALAPPDATA%\\ModLoader\\steamcmd\\\n" +
-        "• Уже ставили — найдите steamcmd.exe в Проводнике и укажите папку.\n" +
-        "• В приложении — только логин; пароль и Steam Guard — в окне steamcmd.\n" +
-        "• Новый мод: publishedfileid = 0. Обновление: Workshop ID из ссылки.\n" +
-        "• Door Kickers = 248610, Door Kickers 2 = 1239080.\n" +
-        "• http error 0 при установке steamcmd — сеть/CDN/firewall; см. FAQ, не пути ModLoader.\n\n" +
-        "Полный FAQ.md рядом с ModLoader.exe.";
+        "ModLoader: Steam-клиент (Steamworks) или steamcmd; игра не запускается.\n\n" +
+        "• Официальный KillHouse/DK2: мод в mods или mods_upload (лучше mods_upload); в игре — синяя стрелка Upload.\n" +
+        "• В мастере — подпапка мода с mod.xml; contentfolder = эта папка.\n" +
+        "• steamcmd: «Указать папку…» / «Скачать и установить»; логин в UI, пароль/Guard в окне steamcmd.\n" +
+        "• Door Kickers 2 = 1239080. http error 0 — сеть/CDN; детали в FAQ.md рядом с exe.";
 }

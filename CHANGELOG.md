@@ -11,6 +11,21 @@ versioning: [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.1.1] — 2026-10-22
+
+### Added / Добавлено
+
+- **EN/RU:** Detect when Steam is unreachable (not running / Init failed / timeout / no API DLL) with clear RU status + «Открыть FAQ?».
+- **EN/RU:** Detect when steamcmd console fails to open (not found / Process.Start fail / immediate exit / timeout) with clear RU alert + FAQ.
+- **EN/RU:** FAQ sections: can’t reach Steam; steamcmd console won’t open.
+- **EN/RU:** FAQ/README: official KillHouse path — mod under **`mods`** / **`mods_upload`** (prefer `mods_upload`); `contentfolder` = mod folder.
+
+### Fixed / Исправлено
+
+- **EN/RU:** Errors always show red status; connectivity failures always offer FAQ.
+
+---
+
 ## [1.1.0] — 2026-10-22
 
 ### Added / Добавлено
@@ -56,6 +71,7 @@ versioning: [Semantic Versioning](https://semver.org/).
 - **RU:** Первый релиз: мастер публикации через `-publish`.
 - Known games, validation, preview, unit tests, self-contained `win-x64` publish.
 
-[Unreleased]: https://github.com/Oleg-Shimanaev/ModLoader/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Oleg-Shimanaev/ModLoader/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/Oleg-Shimanaev/ModLoader/releases/tag/v1.1.1
 [1.1.0]: https://github.com/Oleg-Shimanaev/ModLoader/releases/tag/v1.1.0
 [1.0.0]: https://github.com/Oleg-Shimanaev/ModLoader/releases/tag/v1.0.0

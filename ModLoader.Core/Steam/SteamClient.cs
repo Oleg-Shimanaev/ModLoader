@@ -118,25 +118,47 @@ public sealed class SteamClient : ISteamClient
         }
     }
 
-    public bool LaunchSteamCmdWorkshopBuild(string vdfPath, string username)
+    public SteamCmdLaunchAttempt LaunchSteamCmdWorkshopBuild(string vdfPath, string username)
     {
         var steamCmd = FindSteamCmdPath();
-        if (steamCmd is null || string.IsNullOrWhiteSpace(username) || !File.Exists(vdfPath))
-            return false;
+        var exeExists = !string.IsNullOrWhiteSpace(steamCmd) && File.Exists(steamCmd);
+        if (!exeExists)
+            return SteamCmdLaunchAttempt.Fail(SteamCmdLaunchFailureKind.NotFound);
+
+        if (string.IsNullOrWhiteSpace(username) || !File.Exists(vdfPath))
+            return SteamCmdLaunchAttempt.Fail(SteamCmdLaunchFailureKind.StartFailed);
 
         try
         {
-            Process.Start(new ProcessStartInfo
+            var process = Process.Start(new ProcessStartInfo
             {
                 FileName = steamCmd,
                 Arguments = $"+login {username} +workshop_build_item \"{vdfPath}\" +quit",
                 UseShellExecute = true
             });
-            return true;
+
+            if (process is null)
+            {
+                return SteamCmdLaunchAttempt.Fail(
+                    SteamCmdLaunchDiagnostics.Classify(
+                        exeExists: true,
+                        startSucceeded: false));
+            }
+
+            // Если процесс сразу умер — консоль не успела остаться открытой.
+            var exited = process.WaitForExit(SteamCmdLaunchDiagnostics.DefaultGraceMs);
+            var kind = SteamCmdLaunchDiagnostics.Classify(
+                exeExists: true,
+                startSucceeded: true,
+                processExitedWithinGrace: exited);
+
+            return kind == SteamCmdLaunchFailureKind.None
+                ? SteamCmdLaunchAttempt.Ok()
+                : SteamCmdLaunchAttempt.Fail(kind);
         }
         catch
         {
-            return false;
+            return SteamCmdLaunchAttempt.Fail(SteamCmdLaunchFailureKind.StartFailed);
         }
     }
 

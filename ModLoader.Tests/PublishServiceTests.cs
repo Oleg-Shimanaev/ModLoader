@@ -92,10 +92,43 @@ public class PublishServiceTests
         var result = await _service.PublishAsync(Params(), UploadMethod.SteamClient);
 
         result.Success.Should().BeFalse();
-        result.Message.Should().Contain("Steam");
+        result.OfferFaq.Should().BeTrue();
+        result.Message.Should().Contain("не запущен");
+        result.Message.Should().Contain("FAQ");
         _workshop.Verify(
             w => w.PublishAsync(It.IsAny<UploadParameters>(), It.IsAny<IProgress<float>?>(), It.IsAny<CancellationToken>()),
             Times.Never);
+    }
+
+    [Fact]
+    public async Task PublishAsync_SteamCmd_КонсольНеОткрылась_ОповещениеСFaq()
+    {
+        _steam.Setup(s => s.FindSteamCmdPath()).Returns(@"C:\steamcmd\steamcmd.exe");
+        _steam.Setup(s => s.LaunchSteamCmdWorkshopBuild(It.IsAny<string>(), "player"))
+            .Returns(SteamCmdLaunchAttempt.Fail(SteamCmdLaunchFailureKind.StartFailed));
+
+        var result = await _service.PublishAsync(Params(0), UploadMethod.SteamCmd, steamUsername: "player");
+
+        result.Success.Should().BeFalse();
+        result.OfferFaq.Should().BeTrue();
+        result.Message.Should().Contain("консоль не открылась");
+        result.Message.Should().Contain("FAQ");
+        File.Delete(result.VdfPath!);
+    }
+
+    [Fact]
+    public async Task PublishAsync_SteamCmd_СразуЗакрылся_ОповещениеСFaq()
+    {
+        _steam.Setup(s => s.FindSteamCmdPath()).Returns(@"C:\steamcmd\steamcmd.exe");
+        _steam.Setup(s => s.LaunchSteamCmdWorkshopBuild(It.IsAny<string>(), "player"))
+            .Returns(SteamCmdLaunchAttempt.Fail(SteamCmdLaunchFailureKind.ExitedImmediately));
+
+        var result = await _service.PublishAsync(Params(0), UploadMethod.SteamCmd, steamUsername: "player");
+
+        result.Success.Should().BeFalse();
+        result.OfferFaq.Should().BeTrue();
+        result.Message.Should().Contain("сразу закрылся");
+        File.Delete(result.VdfPath!);
     }
 
     [Fact]
@@ -103,7 +136,7 @@ public class PublishServiceTests
     {
         _steam.Setup(s => s.FindSteamCmdPath()).Returns(@"C:\steamcmd\steamcmd.exe");
         _steam.Setup(s => s.LaunchSteamCmdWorkshopBuild(It.IsAny<string>(), "player"))
-            .Returns(true);
+            .Returns(SteamCmdLaunchAttempt.Ok());
 
         var result = await _service.PublishAsync(Params(0), UploadMethod.SteamCmd, steamUsername: "player");
 
@@ -125,7 +158,7 @@ public class PublishServiceTests
     {
         _steam.Setup(s => s.FindSteamCmdPath()).Returns(@"C:\steamcmd\steamcmd.exe");
         _steam.Setup(s => s.LaunchSteamCmdWorkshopBuild(It.IsAny<string>(), "player"))
-            .Returns(true);
+            .Returns(SteamCmdLaunchAttempt.Ok());
 
         var result = await _service.PublishAsync(
             Params(441616640),

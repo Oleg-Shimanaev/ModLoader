@@ -721,17 +721,28 @@ public sealed class WizardForm : Form
 
             if (ask != DialogResult.Yes)
             {
-                _status.Text = "Нужен запущенный Steam. См. FAQ.";
+                ShowPublishOutcome(new PublishResult
+                {
+                    Success = false,
+                    Message = SteamReachabilityDiagnostics.UserMessage(SteamReachabilityFailureKind.NotRunning),
+                    OfferFaq = true
+                });
                 return;
             }
 
             var ready = _publish.EnsureSteamReady(allowLaunch: true);
-            _status.Text = ready.Message;
+            _status.Text = ready.Message.Replace("\n", " ");
             RefreshSteamUi();
             if (!_steam.IsRunning())
             {
-                MessageBox.Show(this, "Дождитесь входа в Steam и нажмите «Загрузить» снова.",
-                    "Steam", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ShowPublishOutcome(new PublishResult
+                {
+                    Success = false,
+                    Message = ready.IsReady
+                        ? "Steam ещё запускается. Дождитесь входа и нажмите «Загрузить» снова. См. FAQ."
+                        : ready.Message,
+                    OfferFaq = true
+                });
                 return;
             }
         }
@@ -747,8 +758,12 @@ public sealed class WizardForm : Form
 
             if (!_publish.GetSteamCmdUiStatus().IsFound)
             {
-                ShowHumanError(
-                    "Не найден steamcmd.exe. Нажмите «Указать папку steamcmd…» или «Скачать и установить steamcmd». См. FAQ.");
+                ShowPublishOutcome(new PublishResult
+                {
+                    Success = false,
+                    Message = SteamCmdLaunchDiagnostics.UserMessage(SteamCmdLaunchFailureKind.NotFound),
+                    OfferFaq = true
+                });
                 return;
             }
 
@@ -801,30 +816,38 @@ public sealed class WizardForm : Form
     private void ShowPublishOutcome(PublishResult result)
     {
         _status.Text = result.Message.Replace("\n", " ");
-        if (result.Success)
-            _status.BackColor = AccentSoft;
-        else if (result.OfferFaq)
-            _status.BackColor = DangerSoft;
+        _status.BackColor = result.Success ? AccentSoft : DangerSoft;
 
-        if (!result.Success && result.OfferFaq)
+        if (!result.Success)
         {
-            var ask = MessageBox.Show(
+            if (result.OfferFaq)
+            {
+                var ask = MessageBox.Show(
+                    this,
+                    result.Message + "\n\nОткрыть FAQ?",
+                    "Не получилось",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+                if (ask == DialogResult.Yes)
+                    FaqHelper.Open(this);
+                return;
+            }
+
+            MessageBox.Show(
                 this,
-                result.Message + "\n\nОткрыть FAQ?",
+                result.Message,
                 "Не получилось",
-                MessageBoxButtons.YesNo,
+                MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
-            if (ask == DialogResult.Yes)
-                FaqHelper.Open(this);
             return;
         }
 
         MessageBox.Show(
             this,
             result.Message,
-            result.Success ? "Готово" : "Не получилось",
+            "Готово",
             MessageBoxButtons.OK,
-            result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+            MessageBoxIcon.Information);
     }
 
     private void Render()

@@ -57,19 +57,22 @@ public sealed class SteamworksWorkshopPublisher : IWorkshopPublisher
             if (!_init(parameters.AppId, true))
             {
                 return Fail(
-                    "Не удалось подключиться к Steam-клиенту. Запустите Steam и войдите в аккаунт. См. FAQ.",
+                    SteamReachabilityDiagnostics.UserMessage(SteamReachabilityFailureKind.InitFailed),
                     offerFaq: true);
             }
 
             if (!_isLoggedOn())
             {
                 return Fail(
-                    "Steam запущен, но вход не выполнен. Войдите в Steam и повторите. См. FAQ.",
+                    SteamReachabilityDiagnostics.UserMessage(SteamReachabilityFailureKind.NotLoggedOn),
                     offerFaq: true);
             }
 
-            cancellationToken.ThrowIfCancellationRequested();
-            var result = await _submit(parameters, progress, cancellationToken).ConfigureAwait(false);
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            // Нет связи / зависание API — не молчим, отдаём таймаут.
+            linked.CancelAfter(TimeSpan.FromSeconds(90));
+
+            var result = await _submit(parameters, progress, linked.Token).ConfigureAwait(false);
 
             if (!result.Success)
             {
@@ -90,14 +93,20 @@ public sealed class SteamworksWorkshopPublisher : IWorkshopPublisher
                     : $"Мод {mode} через Steam-клиент. Workshop ID: {id}."
             };
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             return Fail("Загрузка отменена.");
+        }
+        catch (OperationCanceledException)
+        {
+            return Fail(
+                SteamReachabilityDiagnostics.UserMessage(SteamReachabilityFailureKind.Timeout),
+                offerFaq: true);
         }
         catch (Exception)
         {
             return Fail(
-                "Ошибка Steamworks. Нужен запущенный Steam и право публиковать в Workshop. См. FAQ.",
+                SteamReachabilityDiagnostics.UserMessage(SteamReachabilityFailureKind.Unknown),
                 offerFaq: true);
         }
         finally

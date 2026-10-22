@@ -13,28 +13,38 @@
 
 Нужны: запущенный Steam (для клиента — ещё вход в аккаунт), право публиковать в Workshop игры, AppID игры.
 
-### Официальный способ KillHouse (альтернатива)
+### Публикация через Steam-клиент (официальный путь KillHouse / Door Kickers 2)
 
-По `readme_how_to_mod.txt` в Door Kickers 2:
+Для upload **через Steam-клиент / игру** (официальный путь KillHouse) мод должен лежать в папке **`mods`** или **`mods_upload`**.
 
-1. Рабочая папка для upload: **`%LOCALAPPDATA%\KillHouseGames\DoorKickers2\mods_upload\`**  
-   (не храните моды только в `mods_upload` внутри установки игры — слетит при апдейте).
-2. Скопируйте **папку мода** (с `mod.xml`) в `mods_upload`.
-3. Откройте игру → меню Mods → у мода **синяя стрелка Upload**.
+- **Предпочтительно `mods_upload`** (шаблон):  
+  `%LOCALAPPDATA%\KillHouseGames\DoorKickers2\mods_upload\<имя_мода>\`  
+  (не храните единственную копию только в `mods_upload` внутри установки игры — слетит при апдейте).
+- Допустимо и **`mods`**:  
+  `%LOCALAPPDATA%\KillHouseGames\DoorKickers2\mods\<имя_мода>\`
+- Также встречается рядом с игрой (буква диска у каждого своя — в примерах её нет):  
+  `steamapps\common\DoorKickers2\mods\<имя_мода>\`  
+  `steamapps\common\DoorKickers2\mods_upload\<имя_мода>\`
 
-### Куда класть мод и что выбирать в мастере
+**В мастере ModLoader и в проводнике выбирайте подпапку мода** с файлом **`mod.xml`**, а не корень `mods` / `mods_upload`.
+
+В игре (официальный путь): меню Mods → у мода **синяя стрелка Upload**.
+
+По шагам (`readme_how_to_mod.txt` в DK2):
+1. Скопируйте папку мода (с `mod.xml`) в `mods_upload` (предпочтительно LocalAppData).
+2. Откройте игру → Mods → синяя стрелка Upload.
 
 | Папка | Назначение |
 |-------|------------|
-| `%LOCALAPPDATA%\KillHouseGames\DoorKickers2\mods\` | Установка/игра своих модов (не Steam Workshop upload) |
-| `%LOCALAPPDATA%\KillHouseGames\DoorKickers2\mods_upload\` | Официально для upload в игре |
-| `steamapps\common\DoorKickers2\mods\` (внутри установки Steam) | Шаблоны KillHouse (ZIP, localization), обычно **не** ваши моды |
+| `%LOCALAPPDATA%\…\mods\` | Свои моды для игры; для клиентского upload тоже подходит |
+| `%LOCALAPPDATA%\…\mods_upload\` | Официально для upload в игре (предпочтительно) |
+| `steamapps\common\DoorKickers2\mods\` / `mods_upload\` | Вариант рядом с установкой; в `mods` часто ещё шаблоны KillHouse |
 
-**В мастере выбирайте подпапку одного мода**, где лежит **`mod.xml`**.  
-Не выбирайте корень `mods` или `mods_upload`.
+### ModLoader: Steamworks и steamcmd (наш путь)
 
-Пример структуры:  
-`%LOCALAPPDATA%\KillHouseGames\DoorKickers2\mods\<имя_мода>\mod.xml`
+В приложении при загрузке через **Steamworks** или **steamcmd** поле **`contentfolder`** = **папка выбранного мода** (та, где `mod.xml`), не корень `mods`.
+
+Для Door Kickers 2 при **клиентском / официальном** upload KillHouse по-прежнему ждут мод в **`mods`** или **`mods_upload`** (см. выше). Удобно держать мод там же и указывать эту подпапку в мастере.
 
 ### Превью
 
@@ -61,6 +71,26 @@ ModLoader подставляет его автоматически, если ф�
 
 Вручную: [SteamCMD (Valve Wiki)](https://developer.valvesoftware.com/wiki/SteamCMD).  
 При способе steamcmd: логин в UI; пароль и 2FA — только в окне steamcmd.
+
+### Не достучались до Steam
+
+Приложение **не молчит**: красный статус + окно «Не получилось» (часто с «Открыть FAQ?»).
+
+| Ситуация | Что сделать |
+|----------|-------------|
+| Steam не запущен | Запустить Steam, войти в аккаунт |
+| Init failed / клиент не отвечает | Перезапустить Steam; проверить интернет, VPN, firewall |
+| Нет связи (таймаут) | Интернет / VPN / firewall; повторить |
+| Нет `steam_api64.dll` | Переустановить ModLoader или выбрать путь **steamcmd** |
+
+### steamcmd: консоль не открывается
+
+| Ситуация | Что сделать |
+|----------|-------------|
+| `steamcmd.exe` не найден | «Указать папку…» или «Скачать и установить steamcmd» |
+| Process.Start / консоль не открылась | Антивирус, путь, права; запустить `steamcmd.exe` вручную |
+| Сразу закрылся | Антивирус/блокировка; см. также **http error 0** ниже |
+| Таймаут без ответа | Сеть/антивирус; запуск вручную |
 
 ### steamcmd: Download failed http error 0
 
@@ -105,18 +135,38 @@ Two options in the wizard (two large buttons):
 
 The game process is **not** launched.
 
-### Official KillHouse path (alternative)
+### Publishing via Steam client (official KillHouse / Door Kickers 2 path)
+
+For upload **via Steam client / in-game** (official KillHouse path), the mod must live under **`mods`** or **`mods_upload`**.
+
+- **Prefer `mods_upload`** (template):  
+  `%LOCALAPPDATA%\KillHouseGames\DoorKickers2\mods_upload\<mod_name>\`  
+  (don’t keep the only copy inside the game install `mods_upload` — updates wipe it).
+- Also fine under **`mods`**:  
+  `%LOCALAPPDATA%\KillHouseGames\DoorKickers2\mods\<mod_name>\`
+- Also seen next to the game install (drive letter varies — omitted on purpose):  
+  `steamapps\common\DoorKickers2\mods\<mod_name>\`  
+  `steamapps\common\DoorKickers2\mods_upload\<mod_name>\`
+
+**In ModLoader (and Explorer) pick the mod subfolder** that contains **`mod.xml`**, not the root `mods` / `mods_upload`.
+
+In-game (official path): Mods menu → **blue Upload arrow**.
 
 From DK2 `readme_how_to_mod.txt`:
+1. Copy the mod folder (with `mod.xml`) into `mods_upload` (prefer LocalAppData).
+2. Launch the game → Mods → blue Upload arrow.
 
-1. Prefer `%LOCALAPPDATA%\KillHouseGames\DoorKickers2\mods_upload\`
-2. Copy the mod folder (with `mod.xml`) there
-3. Launch the game → Mods → **blue Upload arrow**
+| Folder | Role |
+|--------|------|
+| `%LOCALAPPDATA%\…\mods\` | Your mods for play; also OK for client upload |
+| `%LOCALAPPDATA%\…\mods_upload\` | Official in-game upload location (preferred) |
+| `steamapps\common\DoorKickers2\mods\` / `mods_upload\` | Beside install; `mods` often also has KillHouse templates |
 
-### What folder to pick
+### ModLoader: Steamworks and steamcmd (our path)
 
-Pick a **single mod subfolder** with `mod.xml`, not the root `mods` / `mods_upload`.  
-Install `steamapps\common\DoorKickers2\mods` usually has templates only. User mods often live under LocalAppData `mods\<mod_name>\`.
+In the app, for **Steamworks** or **steamcmd**, **`contentfolder`** = the **selected mod folder** (the one with `mod.xml`), not the `mods` root.
+
+For Door Kickers 2 **client / official** KillHouse upload, the game still expects the mod under **`mods`** or **`mods_upload`** (see above). Keep the mod there and point the wizard at that subfolder.
 
 Preview file is often **`mod_image.jpg`**.
 
@@ -129,6 +179,26 @@ Need **`steamcmd.exe`**.
 **In-app install:** **“Скачать и установить steamcmd”** → ask destination folder (default `%LOCALAPPDATA%\ModLoader\steamcmd\`) → temp zip → extract → `steamcmd +quit` → path saved.
 
 Also auto-checks LocalAppData ModLoader folder, app folder, `%ProgramFiles%\SteamCMD\`, profile `steamcmd`. Any other location: use the folder picker.
+
+### Can’t reach Steam
+
+The app shows a **red status** + dialog (often with **Open FAQ?**).
+
+| Case | What to do |
+|------|------------|
+| Steam not running | Start Steam and sign in |
+| Init failed / client not responding | Restart Steam; check internet, VPN, firewall |
+| Timeout / no connection | Network / VPN / firewall; retry |
+| Missing `steam_api64.dll` | Reinstall ModLoader or use **steamcmd** path |
+
+### steamcmd console won’t open
+
+| Case | What to do |
+|------|------------|
+| `steamcmd.exe` not found | Pick folder or in-app install |
+| Process.Start / no console | Antivirus, path, permissions; run `steamcmd.exe` manually |
+| Exits immediately | Antivirus; also see **http error 0** |
+| Timeout with no output | Network/AV; run manually |
 
 ### steamcmd: Download failed http error 0
 

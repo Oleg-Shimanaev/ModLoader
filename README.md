@@ -26,7 +26,7 @@ See **[CHANGELOG.md](CHANGELOG.md)** for version history. Help & paths: **[FAQ.m
 4. New or update (Workshop ID) → title / description → preview  
 5. **Upload** (steamcmd mode: login in UI; password / Guard in the steamcmd window)
 
-Details (mods vs `mods_upload`, official in-game Upload): **FAQ**.
+Details: for **Steam-client / official KillHouse** upload the mod must be under **`mods`** or **`mods_upload`** (prefer `mods_upload`); pick the **mod subfolder** with `mod.xml`. In ModLoader, Steamworks/steamcmd `contentfolder` = that mod folder. Full paths & blue Upload arrow: **[FAQ.md](FAQ.md)**.
 
 ### Build & publish exe
 
@@ -42,7 +42,7 @@ Output: `./publish/win-x64/ModLoader.exe` (+ `steam_api64.dll`, `FAQ.md` beside 
 
 **Primary:** Steamworks against the running Steam client — **no password in ModLoader**, game is **not** launched.  
 **Fallback:** generate VDF → `steamcmd +login … +workshop_build_item …` — game is **not** launched.  
-**Alternative (official KillHouse):** copy mod to `%LOCALAPPDATA%\KillHouseGames\DoorKickers2\mods_upload\` and use the blue Upload arrow in-game (see FAQ).
+**Alternative (official KillHouse):** put the mod under `mods` or `mods_upload` (prefer `%LOCALAPPDATA%\KillHouseGames\DoorKickers2\mods_upload\<mod_name>\`) and use the blue Upload arrow in-game (see FAQ).
 
 ---
 
@@ -58,12 +58,12 @@ Output: `./publish/win-x64/ModLoader.exe` (+ `steam_api64.dll`, `FAQ.md` beside 
 
 ### Как пользоваться
 
-1. Выберите **подпапку мода** (не корень `mods`) → Далее  
+1. Выберите **подпапку мода** с `mod.xml` (не корень `mods` / `mods_upload`) → Далее  
 2. Игра / AppID → способ загрузки: **Steam-клиент** или **steamcmd**  
 3. Новый или обновление → название → превью → **Загрузить**  
    (в режиме steamcmd: логин в UI; пароль и Guard — в окне steamcmd)
 
-Подробности: **[FAQ.md](FAQ.md)**. История: **[CHANGELOG.md](CHANGELOG.md)**.
+Для **официального пути KillHouse / Steam-клиент** мод должен лежать в **`mods`** или **`mods_upload`** (лучше `mods_upload`). В приложении `contentfolder` = папка мода. Подробности: **[FAQ.md](FAQ.md)**. История: **[CHANGELOG.md](CHANGELOG.md)**.
 
 ### Сборка
 
@@ -76,4 +76,4 @@ dotnet publish ModLoader -c Release -r win-x64 --self-contained true -p:PublishS
 
 **Основной путь:** Steamworks через запущенный Steam-клиент, **без пароля в UI**.  
 **Запасной:** steamcmd + VDF, **без запуска игры**.  
-**Официальная альтернатива KillHouse:** `mods_upload` + синяя стрелка Upload в игре (см. FAQ).
+**Официальная альтернатива KillHouse:** мод в `mods` или `mods_upload` (лучше `mods_upload`) + синяя стрелка Upload в игре (см. FAQ).

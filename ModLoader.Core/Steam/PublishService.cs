@@ -115,7 +115,7 @@ public sealed class PublishService
             {
                 IsReady = false,
                 NeedsLaunchPermission = true,
-                Message = "Steam не запущен. Разрешите запуск или откройте Steam сами."
+                Message = SteamReachabilityDiagnostics.UserMessage(SteamReachabilityFailureKind.NotRunning)
             };
         }
 
@@ -125,7 +125,9 @@ public sealed class PublishService
             {
                 IsReady = false,
                 NeedsLaunchPermission = false,
-                Message = "Не удалось запустить Steam. Откройте его вручную. См. FAQ."
+                Message =
+                    "Не удалось запустить Steam. Откройте его вручную.\n" +
+                    "Проверьте интернет, VPN и firewall. См. FAQ."
             };
         }
 
@@ -170,7 +172,7 @@ public sealed class PublishService
             return new PublishResult
             {
                 Success = false,
-                Message = "Запустите Steam и войдите в аккаунт. См. FAQ.",
+                Message = SteamReachabilityDiagnostics.UserMessage(SteamReachabilityFailureKind.NotRunning),
                 OfferFaq = true
             };
         }
@@ -180,8 +182,7 @@ public sealed class PublishService
             return new PublishResult
             {
                 Success = false,
-                Message =
-                    "Steamworks недоступен (нет steam_api64.dll). Выберите «Через steamcmd» или переустановите ModLoader. См. FAQ.",
+                Message = SteamReachabilityDiagnostics.UserMessage(SteamReachabilityFailureKind.ApiUnavailable),
                 OfferFaq = true
             };
         }
@@ -209,7 +210,8 @@ public sealed class PublishService
             return new PublishResult
             {
                 Success = false,
-                Message = "Steam не запущен."
+                Message = SteamReachabilityDiagnostics.UserMessage(SteamReachabilityFailureKind.NotRunning),
+                OfferFaq = true
             };
         }
 
@@ -254,17 +256,20 @@ public sealed class PublishService
         if (!prepared.Success || prepared.VdfPath is null)
             return prepared;
 
-        if (!_steam.LaunchSteamCmdWorkshopBuild(prepared.VdfPath, steamUsername.Trim()))
+        var launch = _steam.LaunchSteamCmdWorkshopBuild(prepared.VdfPath, steamUsername.Trim());
+        if (!launch.Success)
         {
+            var msg = SteamCmdLaunchDiagnostics.UserMessage(launch.FailureKind);
+            if (!string.IsNullOrWhiteSpace(prepared.SuggestedCommand))
+                msg += "\n\nМожно вручную:\n" + prepared.SuggestedCommand;
+
             return new PublishResult
             {
                 Success = false,
                 VdfPath = prepared.VdfPath,
                 SuggestedCommand = prepared.SuggestedCommand,
-                Message =
-                    "Не удалось запустить steamcmd. Укажите папку steamcmd или выполните команду вручную:\n" +
-                    (prepared.SuggestedCommand ?? "") +
-                    "\n\nСм. FAQ."
+                Message = msg,
+                OfferFaq = SteamCmdLaunchDiagnostics.OfferFaq(launch.FailureKind)
             };
         }
 
@@ -297,8 +302,8 @@ public sealed class PublishService
             return new PublishResult
             {
                 Success = false,
-                Message =
-                    "Не найден steamcmd.exe. Нажмите «Указать папку steamcmd…» или «Скачать и установить steamcmd». См. FAQ."
+                Message = SteamCmdLaunchDiagnostics.UserMessage(SteamCmdLaunchFailureKind.NotFound),
+                OfferFaq = true
             };
         }
 
