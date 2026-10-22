@@ -1,10 +1,10 @@
 # ModLoader
 
-> **GitHub About (EN):** Windows wizard that uploads a mod folder to Steam Workshop via the game’s `-publish` flow (Door Kickers–style).
+> **GitHub About (EN):** Windows wizard that uploads a mod folder to Steam Workshop via **Steam client (Steamworks)** or **steamcmd** (no game launch).
 
-Minimal Windows app: a step-by-step wizard to publish a mod folder to the Steam Workshop.
+Minimal Windows app: step-by-step wizard → Steamworks upload **or** VDF + `steamcmd +workshop_build_item`.
 
-Based on the [Door Kickers mod publishing guide](https://steamcommunity.com/sharedfiles/filedetails/?l=english&id=441616640): the game is launched through Steam with `-publish "mod folder"`, then Steam / the game client handles the Workshop upload.
+See **[CHANGELOG.md](CHANGELOG.md)** for version history. Help & paths: **[FAQ.md](FAQ.md)**.
 
 ---
 
@@ -13,68 +13,36 @@ Based on the [Door Kickers mod publishing guide](https://steamcommunity.com/shar
 ### Requirements
 
 1. **Windows 10/11**
-2. **Steam** (account allowed to publish to the chosen game’s Workshop)
-3. The game installed in Steam (Door Kickers AppID: `248610`)
-4. A ready **mod folder** (for Door Kickers, `mod.xml` is recommended)
-5. To **build from source**: [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0). Prebuilt releases are self-contained and do **not** need the SDK.
+2. **Steam** (account allowed to publish; for Steam-client mode, Steam must be running and logged in)
+3. **SteamCMD** only if you choose the steamcmd upload path ([Valve Wiki](https://developer.valvesoftware.com/wiki/SteamCMD))
+4. A **mod folder** with `mod.xml` (Door Kickers 2 AppID: `1239080`)
+5. To **build from source**: [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 
-### How to use the wizard
+### How to use
 
-1. **Select the mod folder** → Next  
-2. **Pick a game** or enter an AppID → Next  
-3. Enter **title** and **description** → Next  
-4. **Preview image** (or Skip)  
-5. Review → **Upload**  
-   If Steam is not running, the app will ask permission to start it.
+1. Select the **mod subfolder** (with `mod.xml`) → Next  
+2. Pick a game / AppID → Next  
+3. Choose upload method: **Steam client** (no password) or **steamcmd**  
+4. New or update (Workshop ID) → title / description → preview  
+5. **Upload** (steamcmd mode: login in UI; password / Guard in the steamcmd window)
 
-### Build & run (from source)
+Details (mods vs `mods_upload`, official in-game Upload): **FAQ**.
+
+### Build & publish exe
 
 ```powershell
 dotnet restore
-dotnet build
-dotnet run --project ModLoader
-```
-
-### Publish a Windows executable
-
-```powershell
+dotnet test
 dotnet publish ModLoader -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/win-x64
 ```
 
-### Tests
-
-```powershell
-dotnet test
-```
-
-Covered (business logic, not UI buttons):
-
-- mod folder validation
-- upload parameters (AppID, title, description, preview)
-- VDF generation for steamcmd
-- Steam check/launch via `ISteamClient` (mocked in tests)
-- wizard step transitions
-
-### Solution layout
-
-| Project | Role |
-|---------|------|
-| `ModLoader` | Thin WinForms UI (wizard) |
-| `ModLoader.Core` | Validation, Steam, VDF, wizard logic |
-| `ModLoader.Tests` | xUnit + Moq + FluentAssertions |
+Output: `./publish/win-x64/ModLoader.exe` (+ `steam_api64.dll`, `FAQ.md` beside it).
 
 ### How upload works
 
-**Primary path:** `steam.exe -applaunch <AppID> -publish "C:\path\to\mod"`  
-(as in the Door Kickers guide).
-
-**Fallback sketch:** generate a `.vdf` for `steamcmd +workshop_build_item` (see `WorkshopVdfGenerator` / `PublishService.PrepareSteamCmdUpload`).
-
-### Limitations
-
-- Full Steamworks API (CreateItem / SubmitItemUpdate) is not wired yet — for Door Kickers, `-publish` is enough.
-- Updating an already published item via steamcmd needs a `publishedfileid` (can be passed manually in code/API when preparing VDF).
-- If the Windows username contains a space, the Door Kickers guide recommends not placing the mod on `C:` — keep that in mind when choosing a folder.
+**Primary:** Steamworks against the running Steam client — **no password in ModLoader**, game is **not** launched.  
+**Fallback:** generate VDF → `steamcmd +login … +workshop_build_item …` — game is **not** launched.  
+**Alternative (official KillHouse):** copy mod to `%LOCALAPPDATA%\KillHouseGames\DoorKickers2\mods_upload\` and use the blue Upload arrow in-game (see FAQ).
 
 ---
 
@@ -83,65 +51,29 @@ Covered (business logic, not UI buttons):
 ### Требования
 
 1. **Windows 10/11**
-2. **Steam** (аккаунт с правом публиковать в Workshop выбранной игры)
-3. Игра установлена в Steam (для Door Kickers — AppID `248610`)
-4. Готовая **папка мода** (для Door Kickers желателен файл `mod.xml`)
-5. Для **сборки из исходников**: [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0). Готовые релизы self-contained — **SDK не нужен**.
+2. **Steam** (для режима клиента — запущен и выполнен вход)
+3. **SteamCMD** — только если выбран путь steamcmd
+4. Папка мода с **`mod.xml`** (Door Kickers 2 = AppID `1239080`)
+5. Для сборки: [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 
-### Как пользоваться мастером
+### Как пользоваться
 
-1. **Выбрать папку мода** → «Далее»
-2. **Выбрать игру** кнопкой или ввести AppID → «Далее»
-3. Ввести **название** и **описание** → «Далее»
-4. **Картинка превью** (можно «Пропустить»)
-5. Проверить данные → «Загрузить»  
-   Если Steam не запущен — приложение спросит разрешение на запуск.
+1. Выберите **подпапку мода** (не корень `mods`) → Далее  
+2. Игра / AppID → способ загрузки: **Steam-клиент** или **steamcmd**  
+3. Новый или обновление → название → превью → **Загрузить**  
+   (в режиме steamcmd: логин в UI; пароль и Guard — в окне steamcmd)
 
-### Сборка и запуск (из исходников)
+Подробности: **[FAQ.md](FAQ.md)**. История: **[CHANGELOG.md](CHANGELOG.md)**.
 
-```powershell
-dotnet restore
-dotnet build
-dotnet run --project ModLoader
-```
-
-### Публикация exe для Windows
-
-```powershell
-dotnet publish ModLoader -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/win-x64
-```
-
-### Тесты
+### Сборка
 
 ```powershell
 dotnet test
+dotnet publish ModLoader -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/win-x64
 ```
-
-Покрыта бизнес-логика (не кнопки UI):
-
-- проверка папки мода
-- параметры загрузки (AppID, название, описание, превью)
-- генерация VDF для steamcmd
-- проверка/запуск Steam через интерфейс `ISteamClient` (в тестах — моки)
-- переходы шагов мастера
-
-### Структура решения
-
-| Проект | Назначение |
-|--------|------------|
-| `ModLoader` | Тонкий WinForms UI (wizard) |
-| `ModLoader.Core` | Логика: валидация, Steam, VDF, мастер |
-| `ModLoader.Tests` | xUnit + Moq + FluentAssertions |
 
 ### Как устроена загрузка
 
-**Основной путь:** `steam.exe -applaunch <AppID> -publish "C:\path\to\mod"`  
-(как в гайде Door Kickers).
-
-**Запасной каркас:** генерация `.vdf` для `steamcmd +workshop_build_item` (см. `WorkshopVdfGenerator` / `PublishService.PrepareSteamCmdUpload`).
-
-### Ограничения
-
-- Полноценный Steamworks API (CreateItem / SubmitItemUpdate) пока не подключён — для Door Kickers достаточно `-publish`.
-- Для обновления уже опубликованного мода через steamcmd нужен `publishedfileid` (сейчас при подготовке VDF можно передать вручную в коде/API сервиса).
-- Если в имени пользователя Windows есть пробел, гайд Door Kickers рекомендует класть мод не на диск `C:` — учтите это при выборе папки.
+**Основной путь:** Steamworks через запущенный Steam-клиент, **без пароля в UI**.  
+**Запасной:** steamcmd + VDF, **без запуска игры**.  
+**Официальная альтернатива KillHouse:** `mods_upload` + синяя стрелка Upload в игре (см. FAQ).

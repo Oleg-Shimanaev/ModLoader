@@ -9,7 +9,7 @@ public class UploadParametersTests
     public void Create_МинимальноВалидныеПараметры_Успех()
     {
         var result = UploadParameters.TryCreate(
-            modFolder: @"D:\mods\MyMod",
+            modFolder: @"C:\mods\SampleMod",
             appId: 248610,
             title: "Мой мод",
             description: "Описание",
@@ -20,13 +20,25 @@ public class UploadParametersTests
         result.Value.Title.Should().Be("Мой мод");
         result.Value.Description.Should().Be("Описание");
         result.Value.PreviewImagePath.Should().BeNull();
+        result.Value.IsUpdate.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Create_СPublishedFileId_ЭтоОбновление()
+    {
+        var result = UploadParameters.TryCreate(
+            @"C:\mods\SampleMod", 248610, "Title", "Desc", null, publishedFileId: 99);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.IsUpdate.Should().BeTrue();
+        result.Value.PublishedFileId.Should().Be(99);
     }
 
     [Fact]
     public void Create_AppIdНоль_Ошибка()
     {
         var result = UploadParameters.TryCreate(
-            @"D:\mods\MyMod", 0, "Title", "Desc", null);
+            @"C:\mods\SampleMod", 0, "Title", "Desc", null);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Contain("AppID");
@@ -36,7 +48,7 @@ public class UploadParametersTests
     public void Create_ПустойЗаголовок_Ошибка()
     {
         var result = UploadParameters.TryCreate(
-            @"D:\mods\MyMod", 248610, "  ", "Desc", null);
+            @"C:\mods\SampleMod", 248610, "  ", "Desc", null);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Contain("назван");
@@ -46,7 +58,7 @@ public class UploadParametersTests
     public void Create_ПустоеОписание_Ошибка()
     {
         var result = UploadParameters.TryCreate(
-            @"D:\mods\MyMod", 248610, "Title", "", null);
+            @"C:\mods\SampleMod", 248610, "Title", "", null);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Contain("описан");
@@ -56,7 +68,7 @@ public class UploadParametersTests
     public void Create_ПревьюНеСуществует_Ошибка()
     {
         var result = UploadParameters.TryCreate(
-            @"D:\mods\MyMod",
+            @"C:\mods\SampleMod",
             248610,
             "Title",
             "Desc",
@@ -74,7 +86,7 @@ public class UploadParametersTests
         try
         {
             var result = UploadParameters.TryCreate(
-                @"D:\mods\MyMod", 248610, "Title", "Desc", preview);
+                @"C:\mods\SampleMod", 248610, "Title", "Desc", preview);
 
             result.IsSuccess.Should().BeTrue();
             result.Value!.PreviewImagePath.Should().Be(preview);

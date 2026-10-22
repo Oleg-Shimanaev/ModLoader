@@ -13,7 +13,7 @@ public class ModFolderValidatorTests
         var result = _validator.Validate("");
 
         result.IsValid.Should().BeFalse();
-        result.Message.Should().Contain("папк");
+        result.Message.Should().ContainEquivalentOf("папк");
     }
 
     [Fact]
@@ -78,6 +78,46 @@ public class ModFolderValidatorTests
         finally
         {
             Directory.Delete(dir, true);
+        }
+    }
+
+    [Fact]
+    public void Validate_КореньMods_ОшибкаНужнаПодпапка()
+    {
+        var parent = CreateTempDir();
+        var mods = Path.Combine(parent, "mods");
+        Directory.CreateDirectory(mods);
+        File.WriteAllText(Path.Combine(mods, "readme.txt"), "x");
+        try
+        {
+            var result = _validator.Validate(mods);
+
+            result.IsValid.Should().BeFalse();
+            result.Message.Should().Contain("подпапк");
+        }
+        finally
+        {
+            Directory.Delete(parent, true);
+        }
+    }
+
+    [Fact]
+    public void Validate_КореньModsUpload_ОшибкаНужнаПодпапка()
+    {
+        var parent = CreateTempDir();
+        var upload = Path.Combine(parent, "mods_upload");
+        Directory.CreateDirectory(upload);
+        File.WriteAllText(Path.Combine(upload, "readme.txt"), "x");
+        try
+        {
+            var result = _validator.Validate(upload);
+
+            result.IsValid.Should().BeFalse();
+            result.Message.Should().Contain("mods_upload");
+        }
+        finally
+        {
+            Directory.Delete(parent, true);
         }
     }
 

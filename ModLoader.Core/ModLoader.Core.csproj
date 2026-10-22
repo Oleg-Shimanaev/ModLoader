@@ -8,7 +8,20 @@
 
 
   <ItemGroup>
+    <PackageReference Include="Facepunch.Steamworks" Version="2.3.3" />
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
   </ItemGroup>
+
+  <!-- Native Steam API рядом с сборкой (для Steamworks / Facepunch) -->
+  <Target Name="CopySteamApiNative" AfterTargets="Build">
+    <PropertyGroup>
+      <_SteamApiDll>$(NuGetPackageRoot)\facepunch.steamworks\2.3.3\content\steam_api64.dll</_SteamApiDll>
+    </PropertyGroup>
+    <Copy
+      SourceFiles="$(_SteamApiDll)"
+      DestinationFolder="$(TargetDir)"
+      SkipUnchangedFiles="true"
+      Condition="Exists('$(_SteamApiDll)')" />
+  </Target>
 
 </Project>

@@ -8,6 +8,6 @@ public static class KnownGames
     public static IReadOnlyList<(string Name, uint AppId)> All { get; } =
     [
         ("Door Kickers", 248610),
-        ("Door Kickers 2", 1231430)
+        ("Door Kickers 2", 1239080)
     ];
 }

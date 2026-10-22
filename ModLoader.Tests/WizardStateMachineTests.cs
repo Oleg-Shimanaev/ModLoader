@@ -13,6 +13,8 @@ public class WizardStateMachineTests
         wizard.CurrentStep.Should().Be(WizardStep.ModFolder);
         wizard.CanGoBack.Should().BeFalse();
         wizard.CanGoNext.Should().BeFalse();
+        wizard.TotalSteps.Should().Be(7);
+        wizard.UploadMethod.Should().Be(UploadMethod.SteamClient);
     }
 
     [Fact]
@@ -27,6 +29,24 @@ public class WizardStateMachineTests
             ok.Should().BeTrue();
             wizard.CanGoNext.Should().BeTrue();
             wizard.ModFolder.Should().Be(dir);
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
+    }
+
+    [Fact]
+    public void SetModFolder_АвтоподставляетModImageJpg()
+    {
+        var wizard = new WizardStateMachine();
+        var dir = CreateModDir(withXml: true);
+        var preview = Path.Combine(dir, "mod_image.jpg");
+        File.WriteAllBytes(preview, new byte[] { 1, 2 });
+        try
+        {
+            wizard.SetModFolder(dir).Should().BeTrue();
+            wizard.PreviewImagePath.Should().Be(preview);
         }
         finally
         {
@@ -66,10 +86,55 @@ public class WizardStateMachineTests
     }
 
     [Fact]
-    public void Next_ПослеAppId_ПереходитКНазванию()
+    public void Next_ПослеAppId_ПереходитКРежимуПубликации()
     {
         var wizard = ReadyAt(WizardStep.GameAppId);
         wizard.SetAppId(248610);
+
+        wizard.Next();
+
+        wizard.CurrentStep.Should().Be(WizardStep.PublishKind);
+    }
+
+    [Fact]
+    public void PublishKind_НовыйМод_МожноДалееБезId()
+    {
+        var wizard = ReadyAt(WizardStep.PublishKind);
+
+        wizard.SetPublishKindCreateNew();
+
+        wizard.CanGoNext.Should().BeTrue();
+        wizard.PublishedFileId.Should().Be(0);
+    }
+
+    [Fact]
+    public void PublishKind_ОбновитьБезId_НельзяДалее()
+    {
+        var wizard = ReadyAt(WizardStep.PublishKind);
+
+        wizard.SetPublishKindUpdate();
+
+        wizard.CanGoNext.Should().BeFalse();
+    }
+
+    [Fact]
+    public void PublishKind_ОбновитьСIdИзСсылки_МожноДалее()
+    {
+        var wizard = ReadyAt(WizardStep.PublishKind);
+        wizard.SetPublishKindUpdate();
+
+        var ok = wizard.SetWorkshopIdInput("https://steamcommunity.com/sharedfiles/filedetails/?id=441616640");
+
+        ok.Should().BeTrue();
+        wizard.CanGoNext.Should().BeTrue();
+        wizard.PublishedFileId.Should().Be(441616640);
+    }
+
+    [Fact]
+    public void Next_ПослеPublishKind_ПереходитКНазванию()
+    {
+        var wizard = ReadyAt(WizardStep.PublishKind);
+        wizard.SetPublishKindCreateNew();
 
         wizard.Next();
 
@@ -96,6 +161,21 @@ public class WizardStateMachineTests
 
         wizard.Next();
 
+        wizard.CurrentStep.Should().Be(WizardStep.UploadMethod);
+    }
+
+    [Fact]
+    public void UploadMethod_ПоУмолчаниюSteamClient_МожноДалее()
+    {
+        var wizard = ReadyAt(WizardStep.UploadMethod);
+
+        wizard.UploadMethod.Should().Be(UploadMethod.SteamClient);
+        wizard.CanGoNext.Should().BeTrue();
+
+        wizard.SetUploadMethodSteamCmd();
+        wizard.UploadMethod.Should().Be(UploadMethod.SteamCmd);
+
+        wizard.Next();
         wizard.CurrentStep.Should().Be(WizardStep.Confirm);
     }
 
@@ -105,6 +185,9 @@ public class WizardStateMachineTests
         var wizard = ReadyAt(WizardStep.Confirm);
 
         wizard.Back();
+        wizard.CurrentStep.Should().Be(WizardStep.UploadMethod);
+
+        wizard.Back();
         wizard.CurrentStep.Should().Be(WizardStep.Preview);
 
         wizard.Back();
@@ -112,7 +195,7 @@ public class WizardStateMachineTests
     }
 
     [Fact]
-    public void Confirm_СобираетПараметрыЗагрузки()
+    public void Confirm_СобираетПараметрыЗагрузки_НовыйМод()
     {
         var wizard = ReadyAt(WizardStep.Confirm);
 
@@ -121,6 +204,20 @@ public class WizardStateMachineTests
         parameters.IsSuccess.Should().BeTrue();
         parameters.Value!.AppId.Should().Be(248610);
         parameters.Value.Title.Should().Be("Мод");
+        parameters.Value.IsUpdate.Should().BeFalse();
+        parameters.Value.PublishedFileId.Should().Be(0);
+    }
+
+    [Fact]
+    public void Confirm_СобираетПараметры_Обновление()
+    {
+        var wizard = ReadyAt(WizardStep.Confirm, updateId: 441616640);
+
+        var parameters = wizard.BuildUploadParameters();
+
+        parameters.IsSuccess.Should().BeTrue();
+        parameters.Value!.IsUpdate.Should().BeTrue();
+        parameters.Value.PublishedFileId.Should().Be(441616640);
     }
 
     [Fact]
@@ -133,7 +230,7 @@ public class WizardStateMachineTests
         act.Should().Throw<InvalidOperationException>();
     }
 
-    private static WizardStateMachine ReadyAt(WizardStep target)
+    private static WizardStateMachine ReadyAt(WizardStep target, ulong updateId = 0)
     {
         var dir = CreateModDir(withXml: true);
         var wizard = new WizardStateMachine();
@@ -148,12 +245,30 @@ public class WizardStateMachineTests
             return wizard;
 
         wizard.Next();
+        if (updateId > 0)
+        {
+            wizard.SetPublishKindUpdate();
+            wizard.SetWorkshopIdInput(updateId.ToString());
+        }
+        else
+        {
+            wizard.SetPublishKindCreateNew();
+        }
+
+        if (target == WizardStep.PublishKind)
+            return wizard;
+
+        wizard.Next();
         wizard.SetTitleAndDescription("Мод", "Описание");
         if (target == WizardStep.TitleDescription)
             return wizard;
 
         wizard.Next();
         if (target == WizardStep.Preview)
+            return wizard;
+
+        wizard.Next();
+        if (target == WizardStep.UploadMethod)
             return wizard;
 
         wizard.Next();

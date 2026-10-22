@@ -8,6 +8,8 @@ namespace ModLoader.Core.Steam;
 /// </summary>
 public sealed class SteamClient : ISteamClient
 {
+    private string? _steamCmdOverride;
+
     public bool IsRunning()
     {
         try
@@ -64,24 +66,33 @@ public sealed class SteamClient : ISteamClient
         return defaults.FirstOrDefault(Directory.Exists);
     }
 
+    public void SetSteamCmdPath(string? pathOrFolder)
+    {
+        _steamCmdOverride = SteamCmdLocator.ResolveInFolder(pathOrFolder);
+    }
+
     public string? FindSteamCmdPath()
     {
+        if (!string.IsNullOrWhiteSpace(_steamCmdOverride) && File.Exists(_steamCmdOverride))
+            return _steamCmdOverride;
+
+        var auto = SteamCmdLocator.FindFirstExisting(SteamCmdLocator.GetAutoSearchCandidates());
+        if (auto is not null)
+            return auto;
+
         var steam = FindSteamPath();
         if (steam is not null)
         {
-            var candidate = Path.Combine(steam, "steamcmd.exe");
-            if (File.Exists(candidate))
-                return candidate;
+            var inSteam = SteamCmdLocator.ResolveInFolder(steam);
+            if (inSteam is not null)
+                return inSteam;
         }
 
-        var common = new[]
-        {
-            @"C:\steamcmd\steamcmd.exe",
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "steamcmd", "steamcmd.exe")
-        };
-
-        return common.FirstOrDefault(File.Exists);
+        return null;
     }
+
+    public bool IsAppInstalled(uint appId) =>
+        SteamAppInstallChecker.IsInstalled(FindSteamPath(), appId);
 
     public bool LaunchAppWithPublishArgs(uint appId, string modFolderPath)
     {
@@ -89,7 +100,6 @@ public sealed class SteamClient : ISteamClient
         if (steamExe is null)
             return false;
 
-        // Как в гайде: -publish <путь к папке мода>
         var args = $"-applaunch {appId} -publish \"{modFolderPath}\"";
 
         try
@@ -98,6 +108,28 @@ public sealed class SteamClient : ISteamClient
             {
                 FileName = steamExe,
                 Arguments = args,
+                UseShellExecute = true
+            });
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public bool LaunchSteamCmdWorkshopBuild(string vdfPath, string username)
+    {
+        var steamCmd = FindSteamCmdPath();
+        if (steamCmd is null || string.IsNullOrWhiteSpace(username) || !File.Exists(vdfPath))
+            return false;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = steamCmd,
+                Arguments = $"+login {username} +workshop_build_item \"{vdfPath}\" +quit",
                 UseShellExecute = true
             });
             return true;

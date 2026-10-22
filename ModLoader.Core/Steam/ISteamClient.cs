@@ -11,7 +11,22 @@ public interface ISteamClient
     string? FindSteamCmdPath();
 
     /// <summary>
-    /// Запускает игру через Steam с аргументом -publish (как в гайде Door Kickers).
+    /// Задать путь к steamcmd.exe (или к папке, где он лежит).
+    /// </summary>
+    void SetSteamCmdPath(string? pathOrFolder);
+
+    /// <summary>
+    /// Есть ли локально установленная игра с этим AppID (appmanifest).
+    /// </summary>
+    bool IsAppInstalled(uint appId);
+
+    /// <summary>
+    /// Legacy: запуск игры через Steam с -publish (не основной путь).
     /// </summary>
     bool LaunchAppWithPublishArgs(uint appId, string modFolderPath);
+
+    /// <summary>
+    /// Запускает steamcmd workshop_build_item для создания/обновления Workshop item.
+    /// </summary>
+    bool LaunchSteamCmdWorkshopBuild(string vdfPath, string username);
 }

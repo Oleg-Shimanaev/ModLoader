@@ -15,4 +15,31 @@
     <ProjectReference Include="..\ModLoader.Core\ModLoader.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\FAQ.md" Link="FAQ.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\CHANGELOG.md" Link="CHANGELOG.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <Target Name="CopySteamApiNative" AfterTargets="Build">
+    <PropertyGroup>
+      <_SteamApiDll>$(NuGetPackageRoot)\facepunch.steamworks\2.3.3\content\steam_api64.dll</_SteamApiDll>
+    </PropertyGroup>
+    <Copy
+      SourceFiles="$(_SteamApiDll)"
+      DestinationFolder="$(TargetDir)"
+      SkipUnchangedFiles="true"
+      Condition="Exists('$(_SteamApiDll)')" />
+  </Target>
+
+  <Target Name="CopySteamApiNativeOnPublish" AfterTargets="Publish">
+    <PropertyGroup>
+      <_SteamApiDll>$(NuGetPackageRoot)\facepunch.steamworks\2.3.3\content\steam_api64.dll</_SteamApiDll>
+    </PropertyGroup>
+    <Copy
+      SourceFiles="$(_SteamApiDll)"
+      DestinationFolder="$(PublishDir)"
+      SkipUnchangedFiles="true"
+      Condition="Exists('$(_SteamApiDll)') And '$(PublishDir)' != ''" />
+  </Target>
+
 </Project>
