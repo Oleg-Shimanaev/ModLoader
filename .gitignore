@@ -41,6 +41,9 @@ appsettings.*.local.json
 .env.*
 !.env.example
 
+## Generated at runtime by Steamworks init (AppID from wizard — never ship a fixed copy)
+steam_appid.txt
+
 ## OS / temp
 Thumbs.db
 Desktop.ini

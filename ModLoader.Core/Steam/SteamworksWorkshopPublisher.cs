@@ -110,9 +110,15 @@ public sealed class SteamworksWorkshopPublisher : IWorkshopPublisher
             {
                 // ignore shutdown errors
             }
+
+            TryDeleteSteamAppIdFile();
         }
     }
 
+    /// <summary>
+    /// Facepunch/Steam API may read steam_appid.txt next to the process.
+    /// Always rewrite from the wizard AppID — never ship a fixed test file in the zip.
+    /// </summary>
     private void EnsureSteamAppIdFile(uint appId)
     {
         try
@@ -122,7 +128,21 @@ public sealed class SteamworksWorkshopPublisher : IWorkshopPublisher
         }
         catch
         {
-            // Init всё равно получит appId аргументом
+            // Init still receives appId as argument
+        }
+    }
+
+    private void TryDeleteSteamAppIdFile()
+    {
+        try
+        {
+            var path = Path.Combine(_appBaseDirectory, "steam_appid.txt");
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+        catch
+        {
+            // leftover file is harmless; next publish overwrites
         }
     }
 

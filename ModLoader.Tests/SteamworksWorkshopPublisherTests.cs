@@ -26,9 +26,17 @@ public class SteamworksWorkshopPublisherTests
         File.WriteAllBytes(Path.Combine(baseDir, "steam_api64.dll"), new byte[] { 1 });
 
         var shutdown = 0;
+        string? appIdAtInit = null;
         var sut = new SteamworksWorkshopPublisher(
             appBaseDirectory: baseDir,
-            init: (_, _) => true,
+            init: (appId, _) =>
+            {
+                var path = Path.Combine(baseDir, "steam_appid.txt");
+                File.Exists(path).Should().BeTrue();
+                appIdAtInit = File.ReadAllText(path).Trim();
+                appId.Should().Be(1239080u);
+                return true;
+            },
             shutdown: () => shutdown++,
             isLoggedOn: () => true,
             submit: (_, _, _) => Task.FromResult(new FpPublishResult
@@ -47,8 +55,9 @@ public class SteamworksWorkshopPublisherTests
             result.Message.Should().Contain("Steam-клиент");
             result.Message.Should().Contain("441616640");
             shutdown.Should().Be(1);
-            File.Exists(Path.Combine(baseDir, "steam_appid.txt")).Should().BeTrue();
-            File.ReadAllText(Path.Combine(baseDir, "steam_appid.txt")).Trim().Should().Be("1239080");
+            appIdAtInit.Should().Be("1239080");
+            // Runtime file is removed after publish — not left as a shipped artifact
+            File.Exists(Path.Combine(baseDir, "steam_appid.txt")).Should().BeFalse();
         }
         finally
         {
